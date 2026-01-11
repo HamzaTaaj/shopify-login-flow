@@ -200,11 +200,9 @@ function RequestAccessTab({ customer }: any) {
     setSuccess("");
 
     try {
-      fetch("/.netlify/functions/request-access", {
+      await fetch("/.netlify/functions/request-access", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: customer.email,
           form,
