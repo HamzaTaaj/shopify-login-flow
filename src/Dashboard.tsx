@@ -20,23 +20,17 @@ export default function Dashboard() {
 
   useEffect(() => {
     const token = localStorage.getItem("customerAccessToken");
-
     if (!token) {
       navigate("/");
       return;
     }
 
-    const loadCustomer = async () => {
-      try {
-        const data = await fetchCustomerDashboard(token);
-        setCustomer(data);
-      } catch {
+    fetchCustomerDashboard(token)
+      .then(setCustomer)
+      .catch(() => {
         localStorage.removeItem("customerAccessToken");
         navigate("/");
-      }
-    };
-
-    loadCustomer();
+      });
   }, []);
 
   const logout = () => {
@@ -45,52 +39,69 @@ export default function Dashboard() {
   };
 
   if (!customer) {
-    return <p className="text-center mt-20">Loading dashboard...</p>;
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-500">
+        Loading your account…
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex">
+    <div className="min-h-screen bg-gray-50 flex">
       {/* ---------------- SIDEBAR ---------------- */}
-      <aside className="w-64 bg-white border-r p-6">
-        <h2 className="text-xl font-bold mb-6">My Account</h2>
+      <aside className="w-64 bg-white border-r px-4 py-6">
+        <h2 className="text-xl font-semibold mb-8">My Account</h2>
 
-        <SidebarItem
+        <NavItem
           label="Profile"
-          active={activeTab === "profile"}
-          onClick={() => setActiveTab("profile")}
+          tab="profile"
+          activeTab={activeTab}
+          setTab={setActiveTab}
         />
-
-        <SidebarItem
+        <NavItem
           label="Orders"
-          active={activeTab === "orders"}
-          onClick={() => setActiveTab("orders")}
+          tab="orders"
+          activeTab={activeTab}
+          setTab={setActiveTab}
         />
-
-        <SidebarItem
+        <NavItem
           label="Addresses"
-          active={activeTab === "addresses"}
-          onClick={() => setActiveTab("addresses")}
+          tab="addresses"
+          activeTab={activeTab}
+          setTab={setActiveTab}
         />
-
-        <SidebarItem
+        <NavItem
           label="Request Access"
-          active={activeTab === "request-access"}
-          onClick={() => setActiveTab("request-access")}
+          tab="request-access"
+          activeTab={activeTab}
+          setTab={setActiveTab}
         />
-
-        <SidebarItem
+        <NavItem
           label="Settings"
-          active={activeTab === "settings"}
-          onClick={() => setActiveTab("settings")}
+          tab="settings"
+          activeTab={activeTab}
+          setTab={setActiveTab}
         />
 
-        <button onClick={logout} className="mt-8 text-red-600 font-medium">
-          Logout
+        <button
+          onClick={logout}
+          className="mt-10 text-sm text-red-600 hover:underline"
+        >
+          Log out
         </button>
       </aside>
 
       {/* ---------------- CONTENT ---------------- */}
-      <main className="flex-1 p-8">
+      <main className="flex-1 p-10">
+        <div className="mb-8">
+          <h1 className="text-2xl font-semibold">
+            Welcome, {customer.firstName}
+          </h1>
+          <p className="text-gray-500 text-sm">
+            Manage your account and requests
+          </p>
+        </div>
+
         {activeTab === "profile" && <ProfileTab customer={customer} />}
         {activeTab === "orders" && <OrdersTab orders={customer.orders.edges} />}
         {activeTab === "addresses" && <AddressesTab />}
@@ -103,15 +114,20 @@ export default function Dashboard() {
   );
 }
 
-/* ---------------- SIDEBAR ITEM ---------------- */
+/* ---------------- NAV ITEM ---------------- */
 
-function SidebarItem({ label, active, onClick }: any) {
+function NavItem({ label, tab, activeTab, setTab }: any) {
+  const active = activeTab === tab;
+
   return (
     <button
-      onClick={onClick}
-      className={`w-full text-left px-3 py-2 rounded mb-2 ${
-        active ? "bg-purple-600 text-white" : "hover:bg-gray-100"
-      }`}
+      onClick={() => setTab(tab)}
+      className={`w-full flex items-center px-3 py-2 rounded mb-1 text-sm transition
+        ${
+          active
+            ? "bg-purple-50 text-purple-700 border-l-4 border-purple-600"
+            : "text-gray-600 hover:bg-gray-100"
+        }`}
     >
       {label}
     </button>
@@ -122,15 +138,14 @@ function SidebarItem({ label, active, onClick }: any) {
 
 function ProfileTab({ customer }: any) {
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Profile</h1>
-      <p>
-        <strong>Name:</strong> {customer.firstName} {customer.lastName}
-      </p>
-      <p>
-        <strong>Email:</strong> {customer.email}
-      </p>
-    </div>
+    <Card>
+      <h2 className="text-lg font-semibold mb-4">Profile</h2>
+      <InfoRow
+        label="Name"
+        value={`${customer.firstName} ${customer.lastName}`}
+      />
+      <InfoRow label="Email" value={customer.email} />
+    </Card>
   );
 }
 
@@ -138,29 +153,25 @@ function ProfileTab({ customer }: any) {
 
 function OrdersTab({ orders }: any) {
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Order History</h1>
+    <div className="space-y-4">
+      <h2 className="text-lg font-semibold">Order History</h2>
 
       {orders.length === 0 ? (
-        <p>No orders found.</p>
+        <Card>No orders found.</Card>
       ) : (
-        <div className="space-y-4">
-          {orders.map((order: any) => (
-            <div key={order.node.id} className="bg-white p-4 rounded shadow">
-              <p>
-                <strong>Order:</strong> {order.node.orderNumber}
-              </p>
-              <p>
-                <strong>Total:</strong> {order.node.totalPrice.amount}{" "}
-                {order.node.totalPrice.currencyCode}
-              </p>
-              <p>
-                <strong>Date:</strong>{" "}
-                {new Date(order.node.processedAt).toLocaleDateString()}
-              </p>
-            </div>
-          ))}
-        </div>
+        orders.map((order: any) => (
+          <Card key={order.node.id}>
+            <InfoRow label="Order" value={order.node.orderNumber} />
+            <InfoRow
+              label="Total"
+              value={`${order.node.totalPrice.amount} ${order.node.totalPrice.currencyCode}`}
+            />
+            <InfoRow
+              label="Date"
+              value={new Date(order.node.processedAt).toLocaleDateString()}
+            />
+          </Card>
+        ))
       )}
     </div>
   );
@@ -169,12 +180,7 @@ function OrdersTab({ orders }: any) {
 /* ---------------- ADDRESSES ---------------- */
 
 function AddressesTab() {
-  return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Addresses</h1>
-      <p>Address management coming soon…</p>
-    </div>
-  );
+  return <Card>Address management coming soon.</Card>;
 }
 
 /* ---------------- REQUEST ACCESS ---------------- */
@@ -191,9 +197,8 @@ function RequestAccessTab({ customer }: any) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
 
-  const handleChange = (e: any) => {
+  const handleChange = (e: any) =>
     setForm({ ...form, [e.target.name]: e.target.value });
-  };
 
   const submitRequest = async () => {
     setLoading(true);
@@ -203,73 +208,72 @@ function RequestAccessTab({ customer }: any) {
       await fetch("/.netlify/functions/request-access", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: customer.email,
-          form,
-        }),
+        body: JSON.stringify({ email: customer.email, form }),
       });
 
-      setSuccess(
-        "Your request has been submitted. We will review and notify you."
-      );
+      setSuccess("Request submitted successfully.");
     } catch {
-      alert("Something went wrong. Please try again.");
+      alert("Something went wrong.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-xl bg-white p-6 rounded shadow">
-      <h1 className="text-2xl font-bold mb-4">Request Access</h1>
+    <Card>
+      <h2 className="text-lg font-semibold mb-4">Request Access</h2>
 
       <Input label="Company" name="company" onChange={handleChange} />
       <Input label="Location" name="location" onChange={handleChange} />
-      <Input
-        label="How many machines?"
-        name="machines"
-        onChange={handleChange}
-      />
+      <Input label="Machines" name="machines" onChange={handleChange} />
       <Input label="Role" name="role" onChange={handleChange} />
 
       <textarea
         name="message"
-        placeholder="Anything else you'd like us to know?"
-        className="w-full border rounded px-3 py-2 mb-4"
+        placeholder="Additional notes"
+        className="w-full border rounded-lg px-3 py-2 mb-4"
         onChange={handleChange}
       />
 
       <button
         onClick={submitRequest}
         disabled={loading}
-        className="bg-purple-600 text-white px-4 py-2 rounded"
+        className="bg-purple-600 text-white px-5 py-2 rounded-lg hover:bg-purple-700 transition"
       >
-        {loading ? "Submitting..." : "Send Request"}
+        {loading ? "Submitting…" : "Submit request"}
       </button>
 
-      {success && <p className="text-green-600 mt-4">{success}</p>}
-    </div>
+      {success && <p className="text-green-600 mt-3">{success}</p>}
+    </Card>
   );
 }
 
 /* ---------------- SETTINGS ---------------- */
 
 function SettingsTab() {
+  return <Card>Password & preferences coming soon.</Card>;
+}
+
+/* ---------------- UI HELPERS ---------------- */
+
+function Card({ children }: any) {
+  return <div className="bg-white rounded-xl shadow-sm p-6">{children}</div>;
+}
+
+function InfoRow({ label, value }: any) {
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Account Settings</h1>
-      <p>Password & preferences settings</p>
+    <div className="flex justify-between text-sm mb-2">
+      <span className="text-gray-500">{label}</span>
+      <span className="font-medium">{value}</span>
     </div>
   );
 }
 
-/* ---------------- INPUT ---------------- */
-
 function Input({ label, ...props }: any) {
   return (
     <div className="mb-3">
-      <label className="block text-sm font-medium mb-1">{label}</label>
-      <input {...props} className="w-full border rounded px-3 py-2" />
+      <label className="block text-sm text-gray-600 mb-1">{label}</label>
+      <input {...props} className="w-full border rounded-lg px-3 py-2" />
     </div>
   );
 }
