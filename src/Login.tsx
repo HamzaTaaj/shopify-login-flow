@@ -39,41 +39,44 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="w-full max-w-md bg-white rounded-2xl border-2 border-purple-600 p-8 shadow-xl">
-        <h1 className="text-2xl font-bold mb-2 text-center">
-          {mode === "login" && "Sign In"}
-          {mode === "forgot" && "Forgot Password"}
-        </h1>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-slate-100 px-4">
+      <div className="w-full max-w-md bg-white rounded-2xl border border-purple-200 p-8 shadow-2xl">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">
+            {mode === "login" && "Sign In"}
+            {mode === "forgot" && "Forgot Password"}
+          </h1>
 
-        <p className="text-sm text-gray-600 text-center mb-6">
-          {mode === "login" && "Welcome back! Please sign in."}
-          {mode === "forgot" && "Enter your email to receive a reset link."}
-        </p>
+          <p className="text-sm text-slate-600">
+            {mode === "login" && "Welcome back! Please sign in to continue."}
+            {mode === "forgot" && "Enter your email to receive a reset link."}
+          </p>
+        </div>
 
         {/* ERROR */}
         {error && (
-          <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
+          <div className="mb-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">
             {error}
           </div>
         )}
 
         {/* SUCCESS */}
         {success && (
-          <div className="mb-4 text-sm text-green-600 bg-green-50 border border-green-200 rounded-lg p-3">
+          <div className="mb-4 text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg p-3">
             {success}
           </div>
         )}
 
         {/* ================= LOGIN FORM ================= */}
         {mode === "login" && (
-          <form onSubmit={handleLogin}>
+          <form onSubmit={handleLogin} className="space-y-4">
             <input
               type="email"
-              placeholder="Email"
+              placeholder="Email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full mb-4 border p-3 rounded"
+              className="w-full border border-slate-300 p-3 rounded-lg focus:ring-2 focus:ring-purple-600 focus:outline-none"
               required
             />
 
@@ -82,13 +85,17 @@ export default function Login() {
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full mb-6 border p-3 rounded"
+              className="w-full border border-slate-300 p-3 rounded-lg focus:ring-2 focus:ring-purple-600 focus:outline-none"
               required
             />
 
             <button
               disabled={loading}
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded font-semibold"
+              className={`w-full py-3 rounded-lg font-semibold transition-all ${
+                loading
+                  ? "bg-purple-400 cursor-not-allowed"
+                  : "bg-purple-600 hover:bg-purple-700 text-white"
+              }`}
             >
               {loading ? "Signing in..." : "Sign In"}
             </button>
@@ -96,7 +103,7 @@ export default function Login() {
         )}
 
         {/* ================= FOOTER LINKS ================= */}
-        <div className="text-center text-sm text-gray-600 mt-6 space-y-2">
+        <div className="text-center text-sm text-slate-600 mt-6 space-y-2">
           {mode === "forgot" && (
             <button
               onClick={() => {
