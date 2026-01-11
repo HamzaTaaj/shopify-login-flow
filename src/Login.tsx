@@ -1,40 +1,54 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { shopifyLogin } from "./shopify";
 
-export default function Login({
-  onLoginSuccess,
-  onSignup,
-}: {
-  onLoginSuccess: () => void;
-  onSignup: () => void;
-}) {
+type Mode = "login" | "forgot";
+
+export default function Login() {
+  const navigate = useNavigate();
+
+  const [mode, setMode] = useState<Mode>("login");
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const resetMessages = () => {
+    setError("");
+    setSuccess("");
+  };
+
+  // ================= LOGIN =================
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    resetMessages();
+    setLoading(true);
 
-    // very simple demo auth
-    if (email === "test@test.com" && password === "123456") {
-      onLoginSuccess();
-    } else {
-      setError("Invalid email or password");
+    try {
+      const token = await shopifyLogin(email, password);
+      localStorage.setItem("customerAccessToken", token.accessToken);
+      navigate("/dashboard");
+    } catch (err: any) {
+      setError(err.message || "Login failed");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="w-full max-w-md bg-white rounded-2xl border-2 border-purple-600 p-8 shadow-xl">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 flex items-center justify-center rounded-full bg-purple-600 text-white text-xl">
-            →
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900">Sign In</h1>
-        </div>
+        <h1 className="text-2xl font-bold mb-2 text-center">
+          {mode === "login" && "Sign In"}
+          {mode === "forgot" && "Forgot Password"}
+        </h1>
 
-        <p className="text-gray-600 mb-6">
-          Welcome back! Sign in to access your account.
+        <p className="text-sm text-gray-600 text-center mb-6">
+          {mode === "login" && "Welcome back! Please sign in."}
+          {mode === "forgot" && "Enter your email to receive a reset link."}
         </p>
 
         {/* ERROR */}
@@ -44,66 +58,78 @@ export default function Login({
           </div>
         )}
 
-        {/* FORM */}
-        <form onSubmit={handleSubmit}>
-          {/* Email */}
-          <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-800 mb-2">
-              Email *
-            </label>
+        {/* SUCCESS */}
+        {success && (
+          <div className="mb-4 text-sm text-green-600 bg-green-50 border border-green-200 rounded-lg p-3">
+            {success}
+          </div>
+        )}
+
+        {/* ================= LOGIN FORM ================= */}
+        {mode === "login" && (
+          <form onSubmit={handleLogin}>
             <input
               type="email"
-              placeholder="your.email@example.com"
+              placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border-2 border-gray-300 px-4 py-3 focus:border-purple-600 outline-none"
+              className="w-full mb-4 border p-3 rounded"
               required
             />
-          </div>
-
-          {/* Password */}
-          <div className="mb-2">
-            <div className="flex justify-between items-center mb-2">
-              <label className="block text-sm font-semibold text-gray-800">
-                Password *
-              </label>
-              <button
-                type="button"
-                className="text-sm text-purple-600 hover:underline"
-              >
-                Forgot Password?
-              </button>
-            </div>
 
             <input
               type="password"
-              placeholder="Enter your password"
+              placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-lg border-2 border-gray-300 px-4 py-3 focus:border-purple-600 outline-none"
+              className="w-full mb-6 border p-3 rounded"
               required
             />
-          </div>
 
-          {/* Button */}
-          <button
-            type="submit"
-            className="w-full mt-8 bg-purple-600 hover:bg-purple-700 text-white py-4 rounded-xl font-semibold text-lg transition"
-          >
-            → Sign In
-          </button>
-        </form>
+            <button
+              disabled={loading}
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded font-semibold"
+            >
+              {loading ? "Signing in..." : "Sign In"}
+            </button>
+          </form>
+        )}
 
-        {/* Footer */}
-        <p className="text-center text-sm text-gray-600 mt-8">
-          Don&apos;t have an account?{" "}
-          <button
-            onClick={onSignup}
-            className="text-purple-600 font-semibold hover:underline"
-          >
-            Sign Up
-          </button>
-        </p>
+        {/* ================= FOOTER LINKS ================= */}
+        <div className="text-center text-sm text-gray-600 mt-6 space-y-2">
+          {mode === "forgot" && (
+            <button
+              onClick={() => {
+                resetMessages();
+                setMode("login");
+              }}
+              className="text-purple-600 hover:underline block"
+            >
+              Back to Sign In
+            </button>
+          )}
+
+          {mode === "login" && (
+            <>
+              <button
+                onClick={() => navigate("/register")}
+                className="text-purple-600 hover:underline block"
+              >
+                Request Access
+              </button>
+
+              <button
+                onClick={() => {
+                  resetMessages();
+                  setMode("forgot");
+                }}
+                className="text-purple-600 hover:underline block"
+              >
+                Forgot password?
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
