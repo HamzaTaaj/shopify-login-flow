@@ -5,7 +5,7 @@ import Login from "./Login";
 import Register from "./Register";
 import Dashboard from "./Dashboard";
 
-import ResetPassword from "./ResetPassword";
+// import ResetPassword from "./ResetPassword";
 
 export default function App() {
   return (
@@ -17,8 +17,8 @@ export default function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/signup" element={<Signup />} />
-
-        <Route path="/reset-password" element={<ResetPassword />} />
+        {/* 
+        <Route path="/reset-password" element={<ResetPassword />} /> */}
 
         {/* default */}
         <Route path="*" element={<Login />} />

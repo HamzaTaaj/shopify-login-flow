@@ -162,6 +162,68 @@ export async function shopifySignup(input: {
 
   return true;
 }
+// ================= UPDATE CUSTOMER NOTES =================
+export async function shopifyUpdateCustomerNotes(
+  token: string,
+  data: {
+    company: string;
+    location?: string;
+    machines?: string;
+    role?: string;
+    message?: string;
+  }
+) {
+  const note = `
+  REQUEST ACCESS FORM
+  -------------------
+  Company: ${data.company}
+  Location: ${data.location || "-"}
+  Machines: ${data.machines || "-"}
+  Role: ${data.role || "-"}
+  Message:
+  ${data.message || "-"}
+  `;
+
+  const res = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Shopify-Storefront-Access-Token": STOREFRONT_TOKEN,
+    },
+    body: JSON.stringify({
+      query: `
+          mutation customerUpdate($token: String!, $customer: CustomerUpdateInput!) {
+            customerUpdate(customerAccessToken: $token, customer: $customer) {
+              customer {
+                id
+              }
+              customerUserErrors {
+                message
+              }
+            }
+          }
+        `,
+      variables: {
+        token,
+        customer: {
+          note,
+        },
+      },
+    }),
+  });
+
+  const json = await res.json();
+  console.log("customerUpdate response:", json);
+
+  const errors = json?.data?.customerUpdate?.customerUserErrors;
+
+  if (errors && errors.length > 0) {
+    throw new Error(errors[0].message);
+  }
+
+  return true;
+}
+
 // ================= REGISTER =================
 export async function shopifyRegister(
   firstName: string,
